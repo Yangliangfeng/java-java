@@ -57,5 +57,20 @@
 
 10. 项目的执行
     mvn exec:java -Dexec.mainClass="com.jtthink.App" 
+    
+11. maven的生命周期
+    1）Clean  构建之前进行一些清理工作
+        （1）pre-clean  执行一些需要在clean之前完成的工作
+        （2）clean  移除所有上一次生成的文件 （mvn clean 就是清理，不会帮我们编译）
+        （3）post-clean  执行一些需要在clean之后立刻完成的工作
+    
+    2) Default 如编译，测试，打包，部署等等
+       （1） process-resources     复制、打包资源文件
+       （2） compile   编译项目
+       （3） test      运行测试（需要配置测试框架。暂不指定）
+       （4） package      打包成可发布的格式，如 JAR 、war
+       （5） install     将包安装至本地仓库 
+       （6） deploy     将最终的包复制到远程的仓库
 
+    3）Site  生成项目报告，站点，发布站点
 ```
