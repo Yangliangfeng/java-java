@@ -49,6 +49,7 @@
 8. 搜索相关软件的地址
    http://search.maven.org/ 
    http://mvnrepository.com/  
+   http://www.mojohaus.org/plugins.html
 
 9. 项目的编译
     进入项目目录：
