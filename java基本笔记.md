@@ -24,3 +24,21 @@
 
 4. 常量名：所有字母都大写。多个单词时，每个单词用下划线连接：XXX_YYY_ZZZ
 ```
+* java的数据类型
+```
+1. 基本数据类型
+    1）数值类型：
+        （1）整数（byte, short, int, long）
+        （2）浮点（float, dobule）
+    
+    2) 字符类型：char
+    
+    3）布尔类型：boolean
+
+2. 引用数据类型
+    1）类：class
+    
+    2）接口：interface
+    
+    3）数值
+```
