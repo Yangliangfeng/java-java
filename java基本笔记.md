@@ -93,7 +93,9 @@
     （跟方法的权限[public, protected, private]，返回值类型，参数的变量名无关）
     
  2. Java的传值机制
-     java是按照值传递的方式
+     java是按照值传递的方式：
+     1）如果参数是基本的数据类型，此时，实参赋给形参的是实参真实存储的数据值
+     2）如果参数是引用数据类型，此时，实参赋给形参的是实参存储的数据地址值
      经典案例：
      public static void main(String[] args) {
         MyIndex.first();
