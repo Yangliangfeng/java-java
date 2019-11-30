@@ -134,4 +134,12 @@ public             yes             yes              yes                    yes
   2）default类只可以被同一个包内部访问
   3）构造器的权限跟类的权限是一致的
 ```
+* JavaBean
+```
+1. JavaBean 是一种java语言写成的可重用组件
+2. 所谓JavaBean,是指符合如下标准的Java类：
+   1）类是公共的
+   2）有一个无参的公共构造器
+   3）有属性，且对应的有get，set方法
+```
 
