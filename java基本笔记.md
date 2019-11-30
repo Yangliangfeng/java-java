@@ -120,4 +120,17 @@
     //结果是： 15  0
               20
 ```
+* java四种访问权限修饰符
+```
+修饰符            类内部         同一个包         不同包的子类              同一个工程
+private            yes            
+(缺省)             yes             yes
+protected          yes             yes              yes
+public             yes             yes              yes                    yes
+
+说明：
+  对于class的权限修饰只可以用public和default(缺省)
+  1）public 类可以在任意地方访问
+  2）default类只可以被同一个包内部访问
+```
 
