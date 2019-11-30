@@ -94,5 +94,28 @@
     
  2. Java的传值机制
      java是按照值传递的方式
+     经典案例：
+     public static void main(String[] args) {
+        MyIndex.first();
+    }
+    public static  void first() {
+        int i = 5;
+        Value v = new Value();
+        v.i = 25;
+        second(v, i);//考察java的传递方式是值传递
+        System.out.println(v.i);
+    }
+    public  static  void second(Value v, int i) {
+        i = 0;
+        v.i = 20;
+        Value val = new Value();
+        v = val;
+        System.out.println(v.i + "  "+i);
+    }
+    class Value{
+      int i = 15;
+    }
+    //结果是： 15  0
+              20
 ```
 
