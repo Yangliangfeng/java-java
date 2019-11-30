@@ -132,5 +132,6 @@ public             yes             yes              yes                    yes
   对于class的权限修饰只可以用public和default(缺省)
   1）public 类可以在任意地方访问
   2）default类只可以被同一个包内部访问
+  3）构造器的权限跟类的权限是一致的
 ```
 
