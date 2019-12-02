@@ -258,4 +258,21 @@ super调用构造器
    （4）像String,Date,FIle，包装类等都重写了Object类中的equals()方法，重写以后，比较的不是两个引用地址是否
         相同，而是比较两个对象的“实体内容”是否相同
 ```
+* 基本数据类型，包装类，String类之间的转化
+```
+1. 基本数据类型   =>   包装类
+   1）通过构造器：Integer i = new Integer(1);
+   2) 自动装箱(java5.0之后的特性)： Integer i = 12;
+   
+2. 包装类    =>    基本数据类型
+   1）调用包装类的方法：int a  = i.intValue()  ---其中i是包装类的对象，而intValue是包装类的方法
+   2）自动拆箱（java5.0之后的特性）： int a = i;
+   
+3. 基本数据类型，包装类    =>  String
+   1) 连接运算： String str1 = num + "";
+   2) 调用String重载的valueOf(xxxx)方法： String fl = String.valueOf(12.3f);
+   
+4. String类型   =>  基本数据类型，包装类
+   1）调用包装类中的parseXxx方法: int a = Integer.parseInt(str1);
+```
 
