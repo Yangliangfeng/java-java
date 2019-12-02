@@ -234,7 +234,7 @@ super调用构造器
   }
 
   class Sub1 extends Base1 {
-      //默认数组和可变参数是等同的
+      //默认数组和可变参数类型是相同的
       public void add(int a, int[] arr){
           System.out.println("sub_1");
       }
