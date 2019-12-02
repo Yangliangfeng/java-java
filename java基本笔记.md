@@ -212,6 +212,36 @@ super调用构造器
 8. 对于引用数据类型，比较的是两个引用数据变量的地址是否相同
 
 9. 多态的实例变量的调用，都是来自的父类的，编译运行都看左边
+
+10. 多态的经典例题
+    public class ExecTest {
+
+    public static void main(String[] args) {
+        Base1 base = new Sub1();
+
+        base.add(1,2,3);
+
+        Sub1 sub = (Sub1)base;
+        sub.add(1, 2, 3);
+
+    }
+  }
+
+  class Base1 {
+      public void add(int a, int... arr) {
+          System.out.println("base1");
+      }
+  }
+
+  class Sub1 extends Base1 {
+      //默认数组和可变参数是等同的
+      public void add(int a, int[] arr){
+          System.out.println("sub_1");
+      }
+      public void add(int a, int b, int c) {
+          System.out.println("sub_2");
+      }
+  }
    
 ```
 
