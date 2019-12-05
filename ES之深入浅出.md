@@ -5,7 +5,7 @@
 1. Elasticsearch对复杂分布式机制的透明隐藏特性
    Elasticsearch是一套分布式的系统，分布式是为了应对大数据量,隐藏了复杂的分布式机制
    
-   1）分片机制（将一些document插入到es集群中，不用关系数据怎么进行分片，数据分到哪个shard中去）
+   1）分片机制（将一些document插入到es集群中，不用关心数据怎么进行分片，数据分到哪个shard中去）
    2）cluster discovery（集群发现机制，当新起一个节点，这个节点会自动发现集群，并且加入了进去，还接受了部分数据）
    3）shard负载均衡（es会自动进行均匀分配，以保持每个节点的均衡的读写负载请求）
    4）shard副本，请求路由，集群扩容，shard重分配
@@ -85,6 +85,18 @@ master选举 ---->  replica容错  -------> 数据恢复
 
 3）重启宕机node，master copy replica到该node，使用原有的shard并同步宕机后的修改，green
 
+```
+* document_id的生成
+```
+1. 手动指定document id
+   PUT /test_index/test_type/2
+   {}
+   适合：把数据导入到es中
+
+2. 自动生成document id
+   命令： post /index/type {}   ------>  AVp4RN0bhjxldOOnBxaE
+   自动生成id的特点：长度为20个字符，URL安全，base64编码，GUID，分布式系统并行生成时不可能会发生冲突
+   
 ```
 
 * 简单的指令
