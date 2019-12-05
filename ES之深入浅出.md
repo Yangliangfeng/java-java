@@ -46,3 +46,107 @@
 7. 删除文档
    DELETE /ecommerce/product/1
 ```
+* ES检索的六种方式
+```
+1. query string search ----> search参数都是以http请求的query string来附带的
+   1) 搜索全部商品
+      GET /ecommerce/product/_search
+   
+   2）搜索商品名称中包含yagao的商品，而且按照售价降序排序
+      GET /ecommerce/product/_search?q=name:yagao&sort=price:desc
+      
+2. query DSL（特定领域的语言）
+   1) 搜索全部商品
+      GET /ecommerce/product/_search
+      {
+        "query": { "match_all": {} }
+      }
+   
+   2）查询名称包含yagao的商品，同时按照价格降序排序
+      GET /ecommerce/product/_search
+      {
+          "query" : {
+              "match" : {
+                  "name" : "yagao"
+              }
+          },
+          "sort": [
+              { "price": "desc" }
+          ]
+      }
+      
+    3）分页查询商品，总共3条商品，假设每页就显示1条商品，现在显示第2页，所以就查出来第2个商品
+      GET /ecommerce/product/_search
+      {
+        "query": { "match_all": {} },
+        "from": 1,
+        "size": 1
+      }
+   
+   4）指定要查询出来商品的名称和价格就可以
+      GET /ecommerce/product/_search
+      {
+        "query": { "match_all": {} },
+        "_source": ["name", "price"]
+      }
+
+3. query filter
+   1）搜索商品名称包含yagao，而且售价大于25元的商品
+      GET /ecommerce/product/_search
+      {
+          "query" : {
+              "bool" : {
+                  "must" : {
+                      "match" : {
+                          "name" : "yagao" 
+                      }
+                  },
+                  "filter" : {
+                      "range" : {
+                          "price" : { "gt" : 25 } 
+                      }
+                  }
+              }
+          }
+      }
+
+4. full-text search（全文检索）
+   GET /ecommerce/product/_search
+   {
+       "query" : {
+           "match" : {
+               "producer" : "yagao producer"
+           }
+       }
+   }
+
+5. phrase search（短语搜索）
+   跟全文检索相对应，相反，全文检索会将输入的搜索串拆解开来，去倒排索引里面去一一匹配，只要能匹配上任意一个
+   
+   拆解后的单词，就可以作为结果返回phrase search，要求输入的搜索串，必须在指定的字段文本中，完全包含一模一样的，
+   
+   才可以算匹配，才能作为结果返回
+   GET /ecommerce/product/_search
+   {
+       "query" : {
+           "match_phrase" : {
+               "producer" : "yagao producer"
+           }
+       }
+   }
+
+6. highlight search（高亮搜索结果）
+   GET /ecommerce/product/_search
+   {
+       "query" : {
+           "match" : {
+               "producer" : "producer"
+           }
+       },
+       "highlight": {
+           "fields" : {
+               "producer" : {}
+           }
+       }
+   }
+```
