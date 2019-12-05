@@ -63,12 +63,28 @@
 
 4. 超出扩容极限，动态修改replica数量，9个shard（3primary，6 replica），扩容到9台机器，比3台机器时，拥有3倍的读吞吐量
 
-5. 3台机器下，9个shard（3 primary，6 replica），资源更少，但是容错性更好，最多容纳2台机器宕机，6个shard只能容纳1台机器宕机
+5. 3台机器下，9个shard（3 primary，6 replica），资源更少，但是容错性更好，最多容纳2台机器宕机，6个shard只能容纳1台
+   
+   机器宕机
 
 解析：6个shard（3 primary shard, 3 replica shard）,分布在三台机器上，为什么能容纳1台机器宕机？
       因为太宕机了，也就是一个primary shard没了，但是，在另外两台机器上，还有宕机的primary shard
       的副本，因此，还能保证数据的完整性。
      
+```
+* Elasticsearch容错机制
+```
+master选举 ---->  replica容错  -------> 数据恢复
+
+前提：
+   9 shard，3 node
+
+1）master node宕机，其他健康的节点自动master选举，此时，集群的状态（cluster status : red），因为primary shard宕机了
+
+2）replica容错：新master将replica提升为primary shard，此时，集群的状态（cluster status: yellow）,因为replica少了
+
+3）重启宕机node，master copy replica到该node，使用原有的shard并同步宕机后的修改，green
+
 ```
 
 * 简单的指令
