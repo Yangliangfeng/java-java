@@ -98,6 +98,25 @@ master选举 ---->  replica容错  -------> 数据恢复
    自动生成id的特点：长度为20个字符，URL安全，base64编码，GUID，分布式系统并行生成时不可能会发生冲突
    
 ```
+* 定制返回的结果，指定_source中，返回哪些field
+```
+1. 返回指定的字段
+   GET /test_index/test_type/1?_source=test_field1
+   
+2. 返回多个字段
+   GET /test_index/test_type/1?_source=test_field1,test_field2
+```
+* document文档删除的原理
+```
+1. document的全量替换
+   语法与创建文档是一样的，如果document id不存在，那么就是创建；如果document id已经存在，那么就是全量替换操作
+   es会将老的document标记为deleted，然后新增我们给定的一个document，当我们创建越来越多的document的时候，es会
+   在适当的时机在后台自动删除标记为deleted的document
+   
+2. document的删除
+   DELETE /index/type/id
+   不会理解物理删除，只会将其标记为deleted，当数据越来越多的时候，在后台自动删除
+```
 
 * 简单的指令
 ```
