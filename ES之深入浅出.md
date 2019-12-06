@@ -313,7 +313,27 @@ master选举 ---->  replica容错  -------> 数据恢复
    一般从1000~5000条数据开始，尝试逐渐增加。另外，如果看大小的话，最好是在5~15MB之间。
 
 ```
+* 路由原理
+```
+1. document路由到shard上原理
+   一个index的数据会被分成多片，每一片都在一个shard中。所以说，一个document，只能存在于一个shard中。
+   当客户端创建document的时候，es此时就需要决定说，这个document是放在这个index的哪个shard上。这个过程
+   称为document routing，数据路由。
+   
+2. 路由算法
+   shard = hash(routing) % number_of_primary_shard
 
+3. 是选择_id 还是 custom routing value
+   默认routing 的值是 _id
+   也可以在发送请求的时候，手动指定一个routing value，比如说 put /index/type/id?routing=user_id
+   手动指定routing value是很有用的，可以说，某一类document一定呗路由到一个shard上去，那么在后续
+   进行应用级别的负载均衡以及提升批量读取的性能的时候，是很有帮助的。
+   
+4. primary shard 数量不可变原理
+   原理是：document被分配到哪个shard中，是根据hash(routing)来计算的；如果primary shard发生变化，
+   则会导致查询的数据丢失。所以，primary shard一旦index建立，是不允许修改的。但是，replica shard是
+   可以随时修改的。
+```
 
 * 简单的指令
 ```
