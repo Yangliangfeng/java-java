@@ -334,6 +334,17 @@ master选举 ---->  replica容错  -------> 数据恢复
    则会导致查询的数据丢失。所以，primary shard一旦index建立，是不允许修改的。但是，replica shard是
    可以随时修改的。
 ```
+* document增删改的内部
+```
+步骤：
+   1）客户端选择一个node发送请求过去，这个node就是coordinating node（协调节点）
+   
+   2）coordinating node，对document进行路由，将请求转发给对应的node（有primary shard）
+   
+   3）实际的node上的primary shard处理请求，然后将数据同步到replica node
+   
+   4）coordinating node，如果发现primary node和所有replica node都搞定之后，就返回响应结果给客户端
+```
 
 * 简单的指令
 ```
