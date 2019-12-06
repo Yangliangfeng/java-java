@@ -288,7 +288,31 @@ master选举 ---->  replica容错  -------> 数据恢复
    尽可能减少网络开销次数，可能可以将性能提升数倍，甚至数十倍，非常非常之重要
 
 ```
+* bulk语法
+```
+1. 基本格式
+   POST /_bulk
+   POST /_bulk
+   { "delete": { "_index": "test_index", "_type": "test_type", "_id": "3" }} 
+   { "create": { "_index": "test_index", "_type": "test_type", "_id": "12" }}
+   { "test_field":    "test12" }
+   { "index":  { "_index": "test_index", "_type": "test_type", "_id": "2" }}
+   { "test_field":    "replaced test2" }
+   { "update": { "_index": "test_index", "_type": "test_type", "_id": "1", "_retry_on_conflict" : 3} }
+   { "doc" : {"test_field2" : "bulk test1"} }
+   格式说明：
+      每一个操作要两个json串，语法如下：
+      {"action": {"metadata"}}
+      {"data"}
 
+2. bulk操作中，任意一个操作失败，是不会影响其他的操作的，但是在返回结果里，会告诉你异常日志
+
+3. bulk size最佳大小
+   bulk request会加载到内存里，如果太大的话，性能反而会下降，因此需要反复尝试一个最佳的bulk size。
+   
+   一般从1000~5000条数据开始，尝试逐渐增加。另外，如果看大小的话，最好是在5~15MB之间。
+
+```
 
 
 * 简单的指令
