@@ -339,7 +339,8 @@ master选举 ---->  replica容错  -------> 数据恢复
 步骤：
    1）客户端选择一个node发送请求过去，这个node就是coordinating node（协调节点）
    
-   2）coordinating node，对document进行路由，将请求转发给对应的node（有primary shard）
+   2）coordinating node，对document进行路由，将请求转发给对应的node的primary shard进行处理
+      replica shard不能处理数据
    
    3）实际的node上的primary shard处理请求，然后将数据同步到replica node
    
