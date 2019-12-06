@@ -243,6 +243,53 @@ master选举 ---->  replica容错  -------> 数据恢复
    }
    
 ```
+* mget批量查询
+```
+1. 情形一
+   GET /_mget
+   {
+      "docs" : [
+         {
+            "_index" : "test_index",
+            "_type" :  "test_type",
+            "_id" :    1
+         },
+         {
+            "_index" : "test_index",
+            "_type" :  "test_type",
+            "_id" :    2
+         }
+      ]
+   }
+
+2. 情形二
+   GET /test_index/_mget
+   {
+      "docs" : [
+         {
+            "_type" :  "test_type",
+            "_id" :    1
+         },
+         {
+            "_type" :  "test_type",
+            "_id" :    2
+         }
+      ]
+   }
+   
+3. 情形三
+   GET /test_index/test_type/_mget
+   {
+      "ids": [1, 2]
+   }
+
+特别说明：
+   一次性要查询多条数据的话，那么一定要用batch批量操作的api
+   尽可能减少网络开销次数，可能可以将性能提升数倍，甚至数十倍，非常非常之重要
+
+```
+
+
 
 * 简单的指令
 ```
