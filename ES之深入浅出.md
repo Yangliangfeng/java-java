@@ -143,6 +143,25 @@ master选举 ---->  replica容错  -------> 数据恢复
 2. 乐观锁的并发控制
    当有线程来修改数据时，先进行版本号的控制，如果修改的数据和原有的数据版本号不一致，则修改的数据就被丢弃
 ```
+* ES乐观锁并发控制实例
+```
+1. ES本身提供的version控制
+   PUT /test_index/test_type/8?version=1
+   {
+     "test_field": "test"
+   }
+   
+2. ES支持外部的version控制
+   PUT /test_index/test_type/8?version=1&version_type=external
+   {
+     "test_field": "test"
+   }
+
+3. version与external version之间的区别：
+   1）内部的version: 只有当你提供的version与es中的_version一模一样的时候，才可以进行修改，只要不一样，就报错
+   2) 当version_type=external的时候，只有当你提供的version比es中的_version大的时候，才能完成修改
+```
+
 
 * 简单的指令
 ```
