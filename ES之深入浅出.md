@@ -192,6 +192,57 @@ master选举 ---->  replica容错  -------> 数据恢复
       
    2）减少了查询和修改中的时间间隔，可以有效的减少并发冲突的情况
 ```
+* ES内置groovy脚本实现各种各样的复杂操作
+```
+1. 内置脚本
+   例子：document中的num字段自增1
+   post /test_index/test_type/11/_update
+   {
+     "script" : "ctx._source.num += 1"
+   }
+   
+2. 外部脚本
+   1）修改字段
+   新建test-add-tags.groovy脚本
+   脚本内容： ctx._source.tags += newtag
+   post /test_index/test_type/11/_update
+   {
+     "script" : {
+       "lang": "groovy",
+       "file": "test-add-tags", //test-add-tags是外部脚本名称
+       "params": {
+         "newtag" : "tag1"
+       }
+     }
+   }
+   
+   2）删除文档
+   ctx.op = ctx._source.num == count ? 'delete' : 'none'
+
+   POST /test_index/test_type/11/_update
+   {
+     "script": {
+       "lang": "groovy",
+       "file": "test-delete-document",
+       "params": {
+         "count": 1
+       }
+     }
+   }
+   
+   3）upsert操作
+   下面命令的含义是：
+   如果num字段存在就自动加1，如果不存在，就执行upsert命令，新增文档
+   post /test_index/test_type/11/_update
+   {
+     "script": "ctx._source.num += 1",
+     "upsert" : {
+       "num" : 0,
+       "tags" : []
+     }
+   }
+   
+```
 
 * 简单的指令
 ```
