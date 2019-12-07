@@ -346,6 +346,30 @@ master选举 ---->  replica容错  -------> 数据恢复
    
    4）coordinating node，如果发现primary node和所有replica node都搞定之后，就返回响应结果给客户端
 ```
+* 写一致性原理和quorum机制
+```
+0. put /index/type/id?consistency=quorum
+
+1. consistency一致性的三种状态
+   1）one（primary shard）
+      写操作，只要有一个primary shard是active活跃可用的，就可以执行
+      
+   2）all（all shard）
+      写操作，必须所有的primary shard和replica shard都是活跃的，才可以执行这个写操作
+      
+   3）quorum（default）
+      默认的值，要求所有的shard中，必须是大部分的shard都是活跃的，可用的，才可以执行这个写操作
+
+2. quorum机制
+   原理：
+   写之前必须确保大多数shard都可用，int( (primary + number_of_replicas) /2) + 1，当number_of_replicas>1时才生效
+   number_of_replicas = 1 是不生效的。
+   
+3. 如果节点数少于quorum数量，可能导致quorum不齐全，进而导致无法执行任何写操作
+  
+4. quorum不齐全时，wait，默认1分钟，timeout，100，30s
+   在写操作的时候，加一个timeout参数，比如说put /index/type/id?timeout=30
+```
 
 * 简单的指令
 ```
