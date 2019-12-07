@@ -370,7 +370,22 @@ master选举 ---->  replica容错  -------> 数据恢复
 4. quorum不齐全时，wait，默认1分钟，timeout，100，30s
    在写操作的时候，加一个timeout参数，比如说put /index/type/id?timeout=30
 ```
+* document内部原理
+```
+1. 客户端发送请求到任意一个node，成为coordinate node
 
+2. coordinate node对document进行路由，将请求转发到对应的node，此时会使用round-robin随机轮询算法，
+
+   在primary shard以及其所有replica中随机选择一个，让读请求负载均衡
+   
+3. 接收请求的node返回document给coordinate node
+
+4. coordinate node返回document给客户端
+
+5. 特殊情况：document如果还在建立索引过程中，可能只有primary shard有，任何一个replica shard都没有，
+
+   此时可能会导致无法读取到document，但是document完成索引建立之后，primary shard和replica shard就都有了
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
