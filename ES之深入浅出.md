@@ -423,6 +423,58 @@ master选举 ---->  replica容错  -------> 数据恢复
      "text": "Text to analyze"
    }
 ```
+* mapping 的原理
+```
+1. 往es里面直接插入数据，es会自动建立索引，同时建立type以及对应的mapping
+
+2. mapping中就自动定义了每个field的数据类型
+
+3. 不同的数据类型（比如说text和date），可能有的是exact value，有的是full text
+
+4. exact value，在建立倒排索引的时候，分词的时候，是将整个值一起作为一个关键词建立到倒排索引中的；
+
+   full text，会经历各种各样的处理，分词，normaliztion（时态转换，同义词转换，大小写转换），才会建立到倒排索引中
+   
+5. exact value和full text类型的field就决定了，在一个搜索过来的时候，对exact value field或者是full text field进行
+
+   搜索的行为也是不一样的，会跟建立倒排索引的行为保持一致；比如说exact value搜索的时候，就是直接按照整个值进行匹配，
+   
+   full text query string，也会进行分词和normalization再去倒排索引中去搜索
+   
+6. dynamic mapping 
+   1) true or false	-->	boolean  转义
+   2）123		-->	long
+   3）123.45		-->	double
+   4）2017-01-01	-->	date
+   5）"hello world"	-->	string/text
+   
+7. 查看某个索引的mapping
+   GET /index/_mapping/type
+```
+* filter与query对比
+```
+1. filter，仅仅只是按照搜索条件过滤出需要的数据而已，不计算任何相关度分数，对相关度没有任何影响
+
+2. query，会去计算每个document相对于搜索条件的相关度，并按照相关度进行排序
+
+3. 一般来说，如果你是在进行搜索，需要将最匹配搜索条件的数据先返回，那么用query；如果你只是要根据一些条件筛
+
+   选出一部分数据，不关注其排序，那么用filter除非是你的这些搜索条件，你希望越符合这些搜索条件的document越排
+   
+   在前面返回，那么这些搜索条件要放在query中；如果你不希望一些搜索条件来影响你的document排序，那么就放在filter
+   
+   中即可
+
+4. filter与query性能
+   1) filter，不需要计算相关度分数，不需要按照相关度分数进行排序，同时还有内置的自动cache最常使用filter的数据
+   2) query，相反，要计算相关度分数，按照分数进行排序，而且无法cache结果
+```
+* 多条件组合查询
+```
+   bool的子条件组合下面可以有：
+   must， must_not， should， filter
+   每个子查询都会计算一个document针对它的相关度分数，然后bool综合所有分数，合并为一个分数，当然filter是不会计算分数的
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
