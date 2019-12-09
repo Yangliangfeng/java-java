@@ -475,6 +475,38 @@ master选举 ---->  replica容错  -------> 数据恢复
    must， must_not， should， filter
    每个子查询都会计算一个document针对它的相关度分数，然后bool综合所有分数，合并为一个分数，当然filter是不会计算分数的
 ```
+* 定位不合法的搜索原因
+```
+1. 使用validate的API
+   GET /test_index/test_type/_validate/query?explain
+   {}
+   一般用在那种特别复杂庞大的搜索下，比如你一下子写了上百行的搜索，这个时候可以先用validate api去验证一下，搜索是否合法
+```
+* TF/IDF算法
+```
+0. Elasticsearch使用的是 term frequency/inverse document frequency算法，简称为TF/IDF算法
+
+1. Term frequency
+   搜索文本中的各个词条在field文本中出现了多少次，出现次数越多，就越相关
+   
+2. Inverse document frequency
+   搜索文本中的各个词条在整个索引的所有文档中出现了多少次，出现的次数越多，就越不相关
+
+```
+* doc values
+```
+0. 搜索的时候，要依靠倒排索引,排序的时候，需要依靠正排索引，看到每个document的每个field，然后进行排序，
+
+   所谓的正排索引，其实就是doc values
+
+1. 在建立索引的时候，一方面会建立倒排索引，以供搜索用;一方面会建立正排索引，也就是doc values，以供排序，
+
+   聚合，过滤等操作使用
+
+2. oc values是被保存在磁盘上的，此时如果内存足够，os会自动将其缓存在内存中，性能还是会很高；如果内存不足够，
+
+   os会将其写入磁盘上
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
