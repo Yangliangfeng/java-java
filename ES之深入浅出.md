@@ -503,9 +503,54 @@ master选举 ---->  replica容错  -------> 数据恢复
 
    聚合，过滤等操作使用
 
-2. oc values是被保存在磁盘上的，此时如果内存足够，os会自动将其缓存在内存中，性能还是会很高；如果内存不足够，
+2. doc values是被保存在磁盘上的，此时如果内存足够，os会自动将其缓存在内存中，性能还是会很高；如果内存不足够，
 
    os会将其写入磁盘上
+```
+* scoll技术滚动搜索大量数据
+```
+   如果一次性要查出来比如10万条数据，那么性能会很差，此时一般会采取用scoll滚动查询，一批一批的查，直到所有数据都查询
+
+完处理完。使用scoll滚动搜索，可以先搜索一批数据，然后下次再搜索一批数据，以此类推，直到搜索出全部的数据来scoll搜索会在
+
+第一次搜索的时候，保存一个当时的视图快照，之后只会基于该旧的视图快照提供数据搜索，如果这个期间数据变更，是不会让用户看到的
+
+采用基于_doc进行排序的方式，性能较高每次发送scroll请求，我们还需要指定一个scoll参数，指定一个时间窗口，每次搜索请求只要
+
+在这个时间窗口内能完成就可以了。
+
+GET /test_index/test_type/_search?scroll=1m
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [ "_doc" ],
+  "size": 3
+}
+下一次搜索：
+GET /_search/scroll
+{
+    "scroll": "1m", 
+    "scroll_id" : "xxxxxx"
+}
+```
+* bouncing results问题
+```
+1. preference
+   决定了哪些shard会被用来执行搜索操作
+   _primary, _primary_first, _local, _only_node:xyz, _prefer_node:xyz, _shards:2,3
+   
+2. bouncing results问题
+   两个document排序，field值相同；不同的shard上，可能排序不同；每次请求轮询打到不同的replica shard上；每次页面上看
+   
+   到的搜索结果的排序都不一样。这就是bouncing result，也就是跳跃的结果。搜索的时候，是轮询将搜索请求发送到每一个
+   
+   replica shard（primary shard），但是在不同的shard上，可能document的排序不同
+   
+3. 解决方案
+   将preference设置为一个字符串，比如说user_id，让每个user每次搜索的时候，都使用同一个replica shard去执行，
+   
+   就不会看到bouncing results了
 ```
 * 简单的指令
 ```
