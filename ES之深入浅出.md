@@ -402,6 +402,27 @@ master选举 ---->  replica容错  -------> 数据恢复
    
    那一页，所以，这个过程耗费网络带宽，耗费内存，还耗费cpu，所以，deep paging会导致性能问题
 ```
+* query 分词
+```
+1. 分词原理
+   1）query string必须以和index建立时相同的analyzer进行分词
+   2）query string对exact value和full text的区别对待
+      date：exact value  ----> 精确匹配
+      _all：full text    ----> 全文搜索
+      
+2. 不同类型的field，可能有的就是full text，有的就是exact value
+   post_date，date：exact value
+   _all：full text，分词，normalization
+   
+3. GET /_search?q=2017 搜索的是_all field，document所有的field都会拼接成一个大串，进行分词
+
+4. 测试分词器，查看是怎么分词的
+   GET /_analyze
+   {
+     "analyzer": "standard",
+     "text": "Text to analyze"
+   }
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
