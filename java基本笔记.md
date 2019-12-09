@@ -393,5 +393,7 @@ super调用构造器
    
    3）两种方式都重写了run方法，将线程要执行的逻辑声明在run()方法中
 ```
+* 线程的五种状态
+![](https://github.com/Yangliangfeng/java-java/raw/master/Images/thread.png)
 
 
