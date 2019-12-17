@@ -552,6 +552,47 @@ GET /_search/scroll
    
    就不会看到bouncing results了
 ```
+* 倒排索引的结构
+```
+1. 倒排索引，是适合用于进行搜索的
+
+2. 倒排索引的结构
+   1) 包含这个关键词的document list
+   2) 包含这个关键词的所有document的数量：IDF（inverse document frequency）
+   3) 这个关键词在每个document中出现的次数：TF（term frequency）
+   4) 这个关键词在这个document中的次序
+   5) 每个document的长度：length norm
+   6) 包含这个关键词的所有document的平均长度
+   
+3. 倒排索引不可变的好处
+   1) 不需要锁，提升并发能力，避免锁的问题
+   2) 数据不变，一直保存在os cache中，只要cache内存足够
+   3) filter cache一直驻留在内存，因为数据不变
+   4) 可以压缩，节省cpu和io开销
+   
+4. 倒排索引不可变的坏处：每次都要重新构建整个索引
+```
+* document写入原理
+```
+1. 步骤：
+   1） document会首先被写入内存buffer缓冲
+
+   2） 每隔一定时间间隔，执行commit point操作
+
+   3） buffer中的数据写入新的index segment
+
+   4） index segment会被写入os cache缓冲中，等待在os cache中的index segment被fsync强制刷到磁盘上
+
+   5） 新的index sgement被打开，供search使用
+
+   6） buffer被清空
+
+2. 每次commit point时，会有一个.del文件，标记了哪些segment中的哪些document被标记为deleted了
+
+3. 搜索的时候，会依次查询所有的segment，从旧的到新的，比如被修改过的document，在旧的segment中，
+
+   会标记为deleted，在新的segment中会有其新的数据
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
