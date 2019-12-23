@@ -593,6 +593,35 @@ GET /_search/scroll
 
    会标记为deleted，在新的segment中会有其新的数据
 ```
+* ES数据写入流程
+```
+1. 将document写入buffer缓冲，同时，将document写入translog日志文件
+
+2. 每隔1秒钟，数据从buffer写入index segment file文件中；然后，segment写入os cache，写入os cache后，
+   内存的buffer就被清空。进入os cache后，就被打开供search使用。search请求就可以搜索到这个os cache中的
+   index segment file。
+   
+3. 随着时间的推移，translog文件会不断的变大，当大到一定程度，就会触发flush操作
+
+4. 执行commit；将buffer现有的数据全部写入segment file,并刷入os cache，打开供search使用
+
+5. 写一个commit point 到磁盘中，标明有哪些Index segment
+
+6. 用fsync将数据强行刷到os disk磁盘上去，所有os cache的数据都会被刷入磁盘
+
+```
+* 数据的恢复
+```
+问题：
+   os cache中囤积了一些数据，但是，此时，不巧，宕机了，os cache中的数据全部丢失，那么，怎么恢复数据
+   
+解决：
+   丢失之前，translog就存储了上一次flush（commit point）直到现在最近的数据的变更记录；os disk上存放了
+   上一次commit point为止，所有的segment file都fsync到了磁盘上；
+   
+   机器被重启，disk上的数据并没有丢失，此时，就会将translog文件中的变更记录进行回放，重新执行之前的各种
+   操作，在buffer中执行，再重新刷新一个一个的segment到os cache中，等待下一次的commit发生即可。
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
