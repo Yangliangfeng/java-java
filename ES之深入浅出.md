@@ -473,7 +473,82 @@ master选举 ---->  replica容错  -------> 数据恢复
 ```
    bool的子条件组合下面可以有：
    must， must_not， should， filter
+   must: 必须匹配
+   must_not: 必须不匹配
+   should: 可以匹配其中任意一个
+   term: 精确匹配
+   terms: 匹配多个；相当于mysql中的in
    每个子查询都会计算一个document针对它的相关度分数，然后bool综合所有分数，合并为一个分数，当然filter是不会计算分数的
+   
+   query term: 精确匹配exact value
+   query match: 全文检索 full text
+   
+   全文检索：
+     进行多个值的检索，有两种做法：
+       1. match query；
+       2. should
+     控制搜索结果精准度：
+         and operator，minimum_should_match
+```
+* 普通match底层为term的过程
+```
+1. 普通match如何转换为term+should
+
+{
+    "match": { "title": "java elasticsearch"}
+}
+
+使用诸如上面的match query进行多值搜索的时候，es会在底层自动将这个match query转换为bool的语法
+bool should，指定多个搜索词，同时使用term query
+{
+  "bool": {
+    "should": [
+      { "term": { "title": "java" }},
+      { "term": { "title": "elasticsearch"   }}
+    ]
+  }
+}
+
+2. and match如何转换为term+must
+   {
+    "match": {
+        "title": {
+            "query":    "java elasticsearch",
+            "operator": "and"
+        }
+    }
+}
+
+{
+  "bool": {
+    "must": [
+      { "term": { "title": "java" }},
+      { "term": { "title": "elasticsearch"   }}
+    ]
+  }
+}
+
+3. minimum_should_match如何转换
+   {
+    "match": {
+        "title": {
+            "query":                "java elasticsearch hadoop spark",
+            "minimum_should_match": "75%"
+        }
+    }
+}
+
+{
+  "bool": {
+    "should": [
+      { "term": { "title": "java" }},
+      { "term": { "title": "elasticsearch"   }},
+      { "term": { "title": "hadoop" }},
+      { "term": { "title": "spark" }}
+    ],
+    "minimum_should_match": 3 
+  }
+}
 ```
 * 定位不合法的搜索原因
 ```
