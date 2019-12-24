@@ -550,6 +550,71 @@ bool should，指定多个搜索词，同时使用term query
   }
 }
 ```
+* 搜索条件的权重之boost
+```
+搜索条件的权重，boost，可以将某个搜索条件的权重加大，此时当匹配这个搜索条件和匹配另一个搜索条件的document，
+
+计算relevance score时，匹配权重更大的搜索条件的document，relevance score会更高，当然也就会优先被返回回来
+
+默认情况下，搜索条件的权重都是一样的，都是1
+```
+* 多shard场景下relevance score不准确问题大揭秘
+```
+1. 问题：
+   在多个shard场景下，有时候导致出现的搜索结果，似乎不是你太想要的结果，也许会出现相关度很高的doc排在了后面
+   ，分数不搞。而相关度很低的doc排在了前面，分数很高。
+
+2. 出现的原因分析：
+   在某一个shard中，有很多的document，包含了title中有java这个关键字，比如说10个doc包含了java；当一个搜索title
+   包含java的请求，到这个shard的时候，应该会这么计算relevance score分数，TF/IDF算法：
+  （1）在一个doc的title中java出现了几次
+  （2）在所有的doc的title的java出现了几次
+  （3）这个doc的title的长度
+   
+   shard中只是一部分doc，默认，就在shard local本地计算IDF
+   
+   在另外一个shard中，只有1个document title包含java，此时，计算shard local IDF，就会分数很高，相关度很高
+   
+3.解决措施：
+  （1）在生产环境中，数据量很大，尽可能实现均匀分配
+  （2）测试环境下，将索引的primary shard设置为1个，number_of_shards=1，index settings
+      如果说只有一个shard，那么当然，所有的document都在这个shard里面，就没有这个问题了
+      
+   （3）测试环境下，搜索附带search_type=dfs_query_then_fetch参数，会将local IDF取出来计算global IDF
+      计算一个doc的相关度分数的时候，就会将所有shard对的local IDF计算一下，获取出来，在本地进行global IDF
+      分数的计算，会将所有shard的doc作为上下文来进行计算，也能确保准确性。但是production生产环境下，不推荐
+      这个参数，因为性能很差。
+
+```
+* best fields策略
+```
+1. best fields策略，就是说，搜索到的结果，应该是某一个field中匹配到了尽可能多的关键词，被排在前面；而不是尽可能多
+
+的field匹配到了少数的关键词，排在了前面
+
+dis_max语法，直接取多个query中，分数最高的那一个query的分数即可
+
+2. tie_breaker  将其他query的分数，乘以tie_breaker，然后综合与最高分数的那个query的分数，综合在一起进行计算
+
+除了取最高分以外，还会考虑其他的query的分数
+
+tie_breaker的值，在0~1之间，是个小数
+
+3. multi_match
+   如：
+   GET /forum/article/_search
+   {
+     "query": {
+       "multi_match": {
+           "query":                "java solution", //匹配的内容
+           "type":                 "best_fields", //搜索的策略
+           "fields":               [ "title^2", "content" ], //"test^2" 表示权重boost的值为2
+           "tie_breaker":          0.3, //表示考虑其他query的分数的比重
+           "minimum_should_match": "50%"  //控制搜索结果的精准度，只有匹配一定数量的关键词的数据，才能返回
+       }
+     } 
+   }
+```
 * 定位不合法的搜索原因
 ```
 1. 使用validate的API
