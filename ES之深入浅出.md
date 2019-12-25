@@ -615,6 +615,106 @@ tie_breaker的值，在0~1之间，是个小数
      } 
    }
 ```
+* most-fields 策略
+```
+1. 定义
+   most-fields策略，主要是说尽可能返回更多field匹配到某个关键词的doc，优先返回
+   
+   没办法用minimum_should_match去掉长尾数据，就是匹配的特别少的结果
+   
+2. enligsh analyzer分词器
+   会将单词还原为其最基本的形态，stemmer，去掉单词所有的形态变化，回到单词本身
+   
+3. best-fields与most-fields的区别
+   1）best-fields：
+      （1）是对多个field进行搜索，挑选某个field匹配度最高的那个分数，同时在多个query最高分相同的情况下，在一定程
+           度上考虑其他query的分数
+      （2）优点：通过best_fields策略，以及综合考虑其他field，还有minimum_should_match支持，可以尽可能精准地将匹
+           配的结果推送到最前面
+      （3）缺点：除了那些精准匹配的结果，其他差不多大的结果，排序结果不是太均匀，没有什么区分度了
+   
+   2）most_fields：
+      （1）综合多个field一起进行搜索，尽可能多地让所有field的query参与到总分数的计算中来
+      （2）优点：将尽可能匹配更多field的结果推送到最前面，整个排序结果是比较均匀的
+      （3）缺点：可能那些精准匹配的结果，无法推送到最前面
+```
+* copy-to
+```
+用copy_to，将多个field组合成一个field,就可以将多个字段的值拷贝到一个字段中，并建立倒排索引
+
+PUT /forum/_mapping/article
+{
+  "properties": {
+      "new_author_first_name": {
+          "type":     "string",
+          "copy_to":  "new_author_full_name" 
+      },
+      "new_author_last_name": {
+          "type":     "string",
+          "copy_to":  "new_author_full_name" 
+      },
+      "new_author_full_name": {
+          "type":     "string"
+      }
+  }
+}
+
+原生的muti-match支持cross-fields
+GET /forum/article/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "Peter Smith",
+      "type": "cross_fields",
+      "operator": "and",
+      "fields": ["author_first_name", "author_last_name"]
+    }
+  }
+}
+```
+* 几个比较重要的概念
+```
+0. 近似匹配
+   phrase match加上 slop就是proximity match 近似匹配
+0-1. slop的含义
+   query string，搜索文本中的几个term，要经过几次移动才能与一个document匹配，这个移动的次数，就是slop。
+   
+1. 召回率：
+   比如你搜索一个java spark，总共有100个doc，能返回多少个doc作为结果，就是召回率，recall
+   
+2. 精准度
+   比如你搜索一个java spark，能不能尽可能让包含java spark，或者是java和spark离的很近的doc，排在最前面，precision
+   
+3. 优先满足召回率
+   意思是比如搜索java spark，包含java的能返回，包含spark也能返回，包含java和spark的也返回；
+   同时兼顾精准度，就是包含java和spark，同时java和spark离的越近的doc排在前面
+   此时可用match query和match phrase query一起使用
+   GET /forum/article/_search
+   {
+     "query": {
+       "bool": {
+         "must": [
+           {
+             "match": {
+               "title": {
+                 "query":"java spark"
+               }
+             }
+           }
+         ],
+          "should" : {
+         "match_phrase": {
+           "title" : {
+             "query" : "java spark",
+             "slop" : 50
+           }
+         }
+       }
+
+       }
+     }
+   }
+```
 * 定位不合法的搜索原因
 ```
 1. 使用validate的API
