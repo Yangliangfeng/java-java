@@ -862,6 +862,234 @@ GET /_search/scroll
    机器被重启，disk上的数据并没有丢失，此时，就会将translog文件中的变更记录进行回放，重新执行之前的各种
    操作，在buffer中执行，再重新刷新一个一个的segment到os cache中，等待下一次的commit发生即可。
 ```
+* 对相关度评分调节和优化的常见4种方法
+```
+1. query-time boost
+   GET /forum/article/_search
+   {
+     "query": {
+       "bool": {
+         "should": [
+           {
+             "match": {
+               "title": {
+                 "query": "java spark",
+                 "boost": 2  //对某个查询内容增加权重
+               }
+             }
+           },
+           {
+             "match": {
+               "content": "java spark"
+             }
+           }
+         ]
+       }
+     }
+   }
+   
+2. 重构查询结构
+3. negative boost
+   搜索包含java，不包含spark的doc，但是这样子很死板搜索包含java，尽量不包含spark的doc，如果包含了spark，
+   
+   不会说排除掉这个doc，而是说将这个doc的分数降低包含了negative term的doc，分数乘以negative boost，分数降低
+
+   GET /forum/article/_search
+   {
+     "query": {
+         "boosting": {
+           "positive": {
+             "match": {
+               "content": "java"
+             }
+           },
+           "negative": {
+             "match": {
+               "content": "spark"
+             }
+           },
+           "negative_boost": 0.2
+         }
+     }
+   }
+
+4. constant_score
+   如果你压根儿不需要相关度评分，直接走constant_score加filter，所有的doc分数都是1，没有评分的概念了
+   
+```
+* IK中文分词器
+```
+1. ik_max_word: 会将文本做最细粒度的拆分
+
+2. ik_smart: 会做最粗粒度的拆分
+   
+   一般选用ik_max_word
+```
+* 聚合分析的概念解释
+```
+1. bucket
+   一个数据分组，按照某个字段进行bucket划分，那个字段的值相同的那么数据，就会被划分到一个bucket中。
+   
+2. metric
+   就是对一个bucket执行的某种聚合分析的操作，比如说求平均值，求最大值，最小值
+   
+3. histogram
+   类似于terms，也是进行bucket分组操作，接收一个field，按照这个field的值的各个范围区间，进行bucket分组操作
+   interval 划分的间隔
+4. date_histogram
+   按照我们指定的某个date类型的日期field，以及日期interval，按照一定的日期间隔，去划分bucket
+   {
+     "size": 0,
+     "aggs": {
+       "group_by_date": {
+         "date_histogram": {
+           "field": "sold_date",
+           "interval": "month",
+           "format": "yyyy-MM-dd",
+           "min_doc_count": 0, //即使某个区间一个数据也没有，这个区间也会返回，不然默认是会过滤掉这个区间的
+           "extended_bounds":{ //划分bucket的时候，会限定这个起始日期和截止日期
+             "min":"2016-01-01",
+             "max":"2017-12-31"
+           }
+         }
+       }
+     }
+   }
+ 5. aggregation scope 一个聚合操作，必须在query的搜索结果范围内执行
+    global：就是global bucket，就是将所有数据纳入聚合的scope，而不管之前的query
+    GET /tvs/sales/_search
+   {
+     "size": 0, 
+     "query": {//搜索
+       "term": {
+         "brand": {
+           "value": "长虹"
+         }
+       }
+     },
+     "aggs": {
+       "single_brand_avg_price": {
+         "avg": {
+           "field": "price"
+         }
+       },
+       "all":{
+         "global": {},
+         "aggs": {
+           "all_brand_avg_price": {
+             "avg": {
+               "field": "price"
+             }
+           }
+         }
+       }
+     }
+   }
+   
+6. 聚合的组合
+   1）搜索 + 聚合：例子如上
+   2）过滤 + 聚合
+      GET /tvs/sales/_search
+      {
+        "size": 0,
+        "query": {//过滤
+          "constant_score": {
+            "filter": {
+              "range": {
+                "price": {
+                  "gte": 1200
+                }
+              }
+            }
+          }
+        },
+        "aggs": {
+          "avg_price": {
+            "avg": {
+              "field": "price"
+            }
+          }
+        }
+   }
+   
+7. aggs.filter  针对的是聚合去做的
+   如果放query里面的filter，是全局的，会对所有的数据都有影响
+   比如说，你要统计，长虹电视，最近1个月的平均值; 最近3个月的平均值; 最近6个月的平均值
+   
+   bucket filter：对不同的bucket下的aggs，进行filter
+```
+* 三角选择原则
+```
+1. 精准+实时+大数据 --> 选择2个
+（1）精准+实时: 没有大数据，数据量很小，那么一般就是单机
+（2）精准+大数据：hadoop，批处理，非实时，可以处理海量数据，保证精准，可能会跑几个小时
+（3）大数据+实时：es，不精准，近似估计，可能会有百分之几的错误率
+
+2. 近似聚合算法
+   如果采取近似估计的算法：延时在100ms左右，0.5%错误
+   
+3. 并行聚合算法：max
+   1）有些聚合分析的算法，是很容易就可以并行的，比如说max
+   2）有些聚合分析的算法，是不好并行的，比如说，count(distinct)
+      es会采取近似聚合的方式，就是采用在每个node上进行近估计的方式，得到最终的结论
+      近似估计后的结果，不完全准确，但是速度会很快，一般会达到完全精准的算法的性能的数十倍
+```
+* cartinality的优化
+```
+1. es，去重，cartinality metric，对每个bucket中的指定的field进行去重，取去重后的count，类似于count(distcint)
+
+2. precision_threshold优化准确率和内存开销
+   GET /tvs/sales/_search
+   {
+       "size" : 0,
+       "aggs" : {
+           "distinct_brand" : {
+               "cardinality" : {
+                 "field" : "brand",
+                 "precision_threshold" : 100  //在多少个unique value以内，cardinality，几乎保证100%准确
+               }
+           }
+       }
+   }
+   1) cardinality算法占用的内存
+      内存消耗： precision_threshold * 8 byte 
+      precision_threshold，值设置的越大，占用内存越大
+   2）HyperLogLog++ (HLL)算法性能优化
+      cardinality底层算法：HLL算法
+      算法的内容是：会对所有的uqniue value取hash值，通过hash值近似去求distcint count
+      优化：
+      默认情况下，发送一个cardinality请求的时候，会动态地对所有的field value，取hash值; 
+      将取hash值的操作，前移到建立索引的时候
+      PUT /tvs/
+      {
+        "mappings": {
+          "sales": {
+            "properties": {
+              "brand": {
+                "type": "text",
+                "fields": {
+                  "hash": {
+                    "type": "murmur3" 
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      GET /tvs/sales/_search
+      {
+          "size" : 0,
+          "aggs" : {
+              "distinct_brand" : {
+                  "cardinality" : {
+                    "field" : "brand.hash",
+                    "precision_threshold" : 100 
+                  }
+              }
+          }
+      }
+```
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
