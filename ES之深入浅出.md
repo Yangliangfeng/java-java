@@ -1054,6 +1054,9 @@ GET /_search/scroll
    1) cardinality算法占用的内存
       内存消耗： precision_threshold * 8 byte 
       precision_threshold，值设置的越大，占用内存越大
+      数百万的unique value，错误率在5%之内
+      1KB=1024B（byte B）= 1000B(近似)
+      
    2）HyperLogLog++ (HLL)算法性能优化
       cardinality底层算法：HLL算法
       算法的内容是：会对所有的uqniue value取hash值，通过hash值近似去求distcint count
