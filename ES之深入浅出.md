@@ -1112,6 +1112,13 @@ GET /_search/scroll
       
       如果percentile越精准，compression设置越大
 ```
+* 分词field + fielddatad的工作原理
+```
+1. doc value是正排索引，是给不分词的field用的，是自动生成的。fielddata是给分词的field建立的正排索引
+
+   fielddata跟doc value没有任何关系，fielddata是加载到内存中的，而doc value是放到磁盘中的。
+```
+
 * 简单的指令
 ```
 1. 快速检查集群的健康状况
