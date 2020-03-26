@@ -1139,6 +1139,9 @@ GET /_search/scroll
     indices.breaker.fielddata.limit:   fielddata的内存限制，默认是60%
     indices.breaker.request.limit  执行聚合的内存限制，默认是40%
     indices.breaker.total.limit   综合上面两个，限制在70%以内
+
+6. 分桶terms
+   collect_mode: breath_first  (广度优先)
 ```
 
 * 简单的指令
