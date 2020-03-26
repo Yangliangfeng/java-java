@@ -1117,6 +1117,28 @@ GET /_search/scroll
 1. doc value是正排索引，是给不分词的field用的，是自动生成的。fielddata是给分词的field建立的正排索引
 
    fielddata跟doc value没有任何关系，fielddata是加载到内存中的，而doc value是放到磁盘中的。
+   
+2. fielddata加载到内存的过程是lazy加载的，对于一个field执行聚合时，才会加载，且只加载这个字段的
+
+   一个索引的一个field，所有的doc都会被加载，而不是少数doc，不是创建索引的时候创建的，而是查询的时候
+   
+   才创建的。
+   
+3. indices.fielddata.cache.size: 20%
+   fielddata占用的内存超出了这个比例限制，那么就会清除掉内存中已有的fielddata数据。
+   
+
+4. 监控fielddata内存使用
+   GET /_stats/fielddata?field=*
+   
+5. circui breaker
+    如果一次query的fielddata超过总内存会oom -----> 产生内存溢出
+    
+    circuit breaker会估算要加载的fielddata大小，如果超出总内存，就会短路，query会失败
+    
+    indices.breaker.fielddata.limit:   fielddata的内存限制，默认是60%
+    indices.breaker.request.limit  执行聚合的内存限制，默认是40%
+    indices.breaker.total.limit   综合上面两个，限制在70%以内
 ```
 
 * 简单的指令
